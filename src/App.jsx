@@ -21,24 +21,21 @@ const StateStyle = styled.div`
 
 const initialState = {
   data: [],
-  loading: false,
+  loading: true,
   error: false,
   count: 0,
-  next: 'https://swapi.dev/api/people?page=1',
 };
 
 const reducer = (state, { type, payload }) => {
   switch(type) {
     case 'loading': {
-      return { ...state, loading: true };
+      return { ...state, loading: payload };
     }
     case 'success': {
       return {
         ...state,
         error: false,
-        loading: false,
         count: payload.count,
-        next: payload.next,
         data: [...state.data, ...payload.results],
       };
     }
@@ -52,7 +49,6 @@ const reducer = (state, { type, payload }) => {
 const App = () => {
   const [
     {
-      next,
       count,
       data,
       error,
@@ -61,35 +57,33 @@ const App = () => {
     dispatch,
   ] = useReducer(reducer, initialState);
 
-  const getPeople = async () => {
-    dispatch({ type: 'loading' });
+  const getPeople = async (next = 'https://swapi.dev/api/people?page=1') => {
     try {
       const response = await fetch(next);
       const jsonResponse = await response.json();
       dispatch({ type: 'success', payload: jsonResponse });
+      if (jsonResponse.next) return getPeople(jsonResponse.next);
+      dispatch({ type: 'loading', payload: false });
     } catch (err) {
       dispatch({ type: 'error' });
     }
   };
 
   useEffect(() => {
-    if (next) {
-      getPeople();
-    }
-  }, [next]);
+    dispatch({ type: 'loading', payload: true });
+    getPeople();
+  }, []);
 
-  return (loading && next
+  return (loading
     ? <StateStyle>Loaded {data.length} of {count}</StateStyle>
     : (
       <div>
         <h1>List of Star Wars characters</h1>
         {error && <StateStyle>An error occured</StateStyle>}
-        {!next && (
-          <Wrap>
-            <FilterTransition data={data} />
-            <FilterDeferred data={data} />
-          </Wrap>
-        )}
+        <Wrap>
+          <FilterTransition data={data} />
+          <FilterDeferred data={data} />
+        </Wrap>
       </div>
     )
   );

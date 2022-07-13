@@ -5,8 +5,7 @@ import { Wrap, UnorderedList, ListItem } from 'components/SearchResults/styled';
 
 const SearchResults = ({ data, search }) => {
   const filterArray = useMemo(() => data
-    .filter(({ name }) => name.toLowerCase().includes(search.toLowerCase())), [search]);
-  console.log(filterArray)
+    .filter(({ name }) => name.toLowerCase().includes(search.toLowerCase())), [search, data]);
   return (
     <Wrap>
       <UnorderedList>
